@@ -228,6 +228,7 @@ struct representation {
     
     int64_t segmentDuration;
     int64_t segmentTimescalce;
+    int64_t presentationTimeOffset;
     
     int64_t cur_seq_no;
     int64_t cur_seg_offset;
@@ -470,6 +471,7 @@ static void update_options(char **dest, const char *name, void *src)
 static int open_url(AVFormatContext *s, AVIOContext **pb, const char *url,
                     AVDictionary *opts, AVDictionary *opts2, int *is_http)
 {
+
     DASHContext *c = s->priv_data;
     AVDictionary *tmp = NULL;
     const char *proto_name = NULL;
@@ -783,6 +785,7 @@ static enum RepType get_content_type(xmlNodePtr node, xmlChar **mimeType, xmlCha
         const char *attr = "contentType";
         val = xmlGetProp(node, attr);
         if (val) {
+            *contentType = val;
             if (strstr((const char *) val, "video"))
                 type = REP_TYPE_VIDEO;
             else if (strstr((const char *) val, "audio"))
@@ -793,6 +796,7 @@ static enum RepType get_content_type(xmlNodePtr node, xmlChar **mimeType, xmlCha
         val = xmlGetProp(node, attr);
         if (type == REP_TYPE_UNSPECIFIED) {
             if (val) {
+                *mimeType = val;
                 if (strstr((const char *) val, "video"))
                     type = REP_TYPE_VIDEO;
                 else if (strstr((const char *) val, "audio"))
@@ -1194,7 +1198,7 @@ static int parse_mainifest(AVFormatContext *s, const char *url, AVIOContext *in)
                                 xmlChar *duration_val        = get_val_from_nodes_tab(segmentTemplatesTab,  2, "duration");
                                 xmlChar *startNumber_val     = get_val_from_nodes_tab(segmentTemplatesTab,  2, "startNumber");
                                 xmlChar *timescale_val       = get_val_from_nodes_tab(segmentTemplatesTab,  2, "timescale");
-                                
+                                xmlChar *presentationTimeOffset_val       = get_val_from_nodes_tab(segmentTemplatesTab,  2, "presentationTimeOffset");
                                 xmlChar *initialization_val  = get_val_from_nodes_tab(segmentTemplatesTab,  2, "initialization");
                                 xmlChar *media_val           = get_val_from_nodes_tab(segmentTemplatesTab,  2, "media");
                                 
@@ -1236,6 +1240,11 @@ static int parse_mainifest(AVFormatContext *s, const char *url, AVIOContext *in)
                                 if (timescale_val) {
                                     rep->segmentTimescalce = (int64_t) atoll((const char *)timescale_val);
                                     xmlFree(timescale_val);
+                                }
+                                
+                                if (presentationTimeOffset_val) {
+                                    rep->presentationTimeOffset = (int64_t) atoll((const char *)presentationTimeOffset_val);
+                                    xmlFree(presentationTimeOffset_val);
                                 }
                                 
                                 if (startNumber_val) {
@@ -1652,7 +1661,17 @@ static int64_t calc_cur_seg_no(struct representation *pls, DASHContext *c)
                 num = pls->first_seq_no;
         }
         else {
-            num = pls->first_seq_no + (((GetCurrentTimeInSec() - c->availabilityStartTimeSec) - c->presentationDelaySec) * pls->segmentTimescalce) / pls->segmentDuration;
+            num = pls->first_seq_no + (((GetCurrentTimeInSec() - c->availabilityStartTimeSec) - c->presentationDelaySec - pls->presentationTimeOffset) * pls->segmentTimescalce) / pls->segmentDuration;
+            #ifdef PRINTING
+            printf("pls->first_seq_no = %d\n", pls->first_seq_no);
+            printf("pls->segmentTimescalce = %d\n", pls->segmentTimescalce);
+            printf("pls->segmentDuration = %d\n", pls->segmentDuration);
+            printf("GetCurrentTimeInSec() = %d\n", GetCurrentTimeInSec());
+            printf("c->presentationDelaySec = %d\n", c->presentationDelaySec);
+            printf("pls->presentationTimeOffset = %d\n", pls->presentationTimeOffset);
+            printf("c->availabilityStartTimeSec = %d\n", c->availabilityStartTimeSec);
+            printf("num = %d\n", num);
+            #endif // PRINTING
         }
 
     } else {
@@ -1666,7 +1685,7 @@ static int64_t calc_min_seg_no(struct representation *pls, DASHContext *c)
     int64_t num = 0;
 
     if (c->is_live && pls->segmentDuration) { 
-        num = pls->first_seq_no + (((GetCurrentTimeInSec() - c->availabilityStartTimeSec) - c->timeShiftBufferDepthSec) * pls->segmentTimescalce)  / pls->segmentDuration;
+        num = pls->first_seq_no + (((GetCurrentTimeInSec() - c->availabilityStartTimeSec) - c->timeShiftBufferDepthSec - pls->presentationTimeOffset) * pls->segmentTimescalce)  / pls->segmentDuration;
 
     } else {
         num = pls->first_seq_no;
@@ -1687,7 +1706,7 @@ static int64_t calc_max_seg_no(struct representation *pls, DASHContext *c) {
         }
     }
     else if (c->is_live) {
-        num = pls->first_seq_no + (((GetCurrentTimeInSec() - c->availabilityStartTimeSec)) * pls->segmentTimescalce)  / pls->segmentDuration;
+        num = pls->first_seq_no + (((GetCurrentTimeInSec() - c->availabilityStartTimeSec)) * pls->segmentTimescalce - pls->presentationTimeOffset)  / pls->segmentDuration;
     }
     else {
         num = pls->first_seq_no + (c->mediaPresentationDurationSec * pls->segmentTimescalce) / pls->segmentDuration;
@@ -2143,7 +2162,6 @@ restart:
 
         ret = open_input(c, v, v->cur_seg);
         if (ret < 0) {
-
             av_log( v->parent, AV_LOG_WARNING, "Failed to Open Input by (open_input): %s \n", v->cur_seg->url);
 
             #ifdef PRINTING
@@ -2493,7 +2511,6 @@ static int dash_read_header(AVFormatContext *s)
 #else //-----------------------------------------------------------------------------------------------------------
     /* Open the demuxer for curent video and current audio components if available "UPGRADED PATCH WAY" */
     if ( ( 0 == ret ) && ( c->cur_video ) ) {
-
         ret = open_demux_for_component(s, c->cur_video, c->cur_video->rep_idx);
         if (ret == 0) {
             c->cur_video->stream_index = stream_index;
@@ -2505,7 +2522,6 @@ static int dash_read_header(AVFormatContext *s)
     }
     
     if ( ( 0 == ret ) && ( c->cur_audio ) ) {
-
         ret = open_demux_for_component(s, c->cur_audio, c->cur_audio->rep_idx);
         if (ret == 0) {
             c->cur_audio->stream_index = stream_index;
