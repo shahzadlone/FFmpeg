@@ -85,6 +85,12 @@ enum PlaylistType {
     PLS_TYPE_VOD
 };
 
+enum ManifestType {
+    MANIFEST_TYPE_UNSPECIFIED,
+    MANIFEST_TYPE_MASTER,
+    MANIFEST_TYPE_MEDIA
+};
+
 /*
  * Each playlist has its own demuxer. If it currently is active,
  * it has an open AVIOContext too, and potentially an AVPacket
