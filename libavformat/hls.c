@@ -1424,6 +1424,14 @@ reload:
             intercept_id3(v, buf, buf_size, &ret);
         }
 
+        // replace mpegts parser callback mechanism
+        if(interal && urlc && v->input) {
+            interal = (struct AVIOInternal*)v->input->opaque;
+            urlc = (URLContext*)interal->h;
+            urlc->mpegts_parser_injection = v->mpegts_parser_input_backup;
+            urlc->mpegts_parser_injection_context = v->mpegts_parser_input_context_backup;
+        }
+
         return ret;
     }
     ff_format_io_close(v->parent, &v->input);
