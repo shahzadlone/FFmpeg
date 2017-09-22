@@ -221,6 +221,19 @@ typedef struct HLSContext {
     char *allowed_extensions;
 } HLSContext;
 
+// Compares low-level m3u8 filenames (not including path but including extension) to check if user selected this variant
+static int is_selected(const char * current_variant_url, const char *selected_variant_url)
+{
+    char *current_variant_filename = av_basename(current_variant_url);
+    int str_len = strlen(current_variant_filename);
+    char *selected_variant_filename = av_basename(selected_variant_url);
+    int suffix_len = strlen(selected_variant_filename);
+
+    return 
+        (str_len >= suffix_len) &&
+        (0 == strcmp(current_variant_filename + (str_len-suffix_len), selected_variant_filename));
+}
+
 static int read_chomp_line(AVIOContext *s, char *buf, int maxlen)
 {
     int len = ff_get_line(s, buf, maxlen);
