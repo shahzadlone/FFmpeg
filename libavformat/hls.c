@@ -2253,3 +2253,4 @@ AVInputFormat ff_hls_demuxer = {
     .read_close     = hls_close,
     .read_seek      = hls_read_seek,
 };
+
