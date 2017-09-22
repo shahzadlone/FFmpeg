@@ -2229,6 +2229,9 @@ static const AVOption hls_options[] = {
         OFFSET(allowed_extensions), AV_OPT_TYPE_STRING,
         {.str = "3gp,aac,avi,flac,mkv,m3u8,m4a,m4s,m4v,mpg,mov,mp2,mp3,mp4,mpeg,mpegts,ogg,ogv,oga,ts,vob,wav"},
         INT_MIN, INT_MAX, FLAGS},
+    {"selected_variant_id", "selected low-level manifests (variants)", 
+        OFFSET(selected_variant_id), AV_OPT_TYPE_STRING, 
+        {.str = ""}, INT_MIN, INT_MAX, FLAGS},
     {NULL}
 };
 
