@@ -455,6 +455,16 @@ static struct segment *new_init_section(struct playlist *pls,
         sec->size = -1;
     }
 
+    // Actual Segment Size
+    URLContext* urlCtx;
+    //int ret = ffurl_alloc(&urlCtx, "", 0, 0);
+    if (ffurl_open(&urlCtx, sec->url, 0, 0, NULL) >= 0)
+        sec->actual_size = ffurl_seek(urlCtx, 0, AVSEEK_SIZE);
+    else
+        sec->actual_size = -1;
+    ffurl_close(urlCtx);
+    //av_log(NULL, AV_LOG_INFO, "Init Segment: url: %s,  size = %d / %d\n", sec->url, sec->size, sec->actual_size);
+
     dynarray_add(&pls->init_sections, &pls->n_init_sections, sec);
 
     return sec;
@@ -816,7 +826,8 @@ static int parse_playlist(HLSContext *c, const char *url,
         } else if (av_strstart(line, "#", NULL)) {
             continue;
         } else if (line[0]) {
-            if (is_variant) {
+            if ( is_variant && is_selected(line, c->selected_variant_id) ) {
+                av_log(c, AV_LOG_INFO, "Variant %s selected\n", line);
                 if (!new_variant(c, &variant_info, line, url)) {
                     ret = AVERROR(ENOMEM);
                     goto fail;
@@ -871,6 +882,7 @@ static int parse_playlist(HLSContext *c, const char *url,
                 dynarray_add(&pls->segments, &pls->n_segments, seg);
                 is_segment = 0;
 
+                // Parsed Segment Size
                 seg->size = seg_size;
                 if (seg_size >= 0) {
                     seg->url_offset = seg_offset;
