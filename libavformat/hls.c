@@ -1745,11 +1745,17 @@ static int hls_read_header(AVFormatContext *s)
     /* If the playlist only contained playlists (Master Playlist),
      * parse each individual playlist. */
     if (c->n_playlists > 1 || c->playlists[0]->n_segments == 0) {
+        c->type = MANIFEST_TYPE_MASTER;
+        av_log(s, AV_LOG_INFO, "Manifest Type: Master\n");
         for (i = 0; i < c->n_playlists; i++) {
             struct playlist *pls = c->playlists[i];
             if ((ret = parse_playlist(c, pls->url, pls, NULL)) < 0)
                 goto fail;
         }
+    }
+    else {
+        c->type = MANIFEST_TYPE_MEDIA;
+        av_log(s, AV_LOG_INFO, "Manifest Type: Media\n");
     }
 
     if (c->variants[0]->playlists[0]->n_segments == 0) {
