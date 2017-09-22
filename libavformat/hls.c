@@ -1274,6 +1274,7 @@ static int update_init_section(struct playlist *pls, struct segment *seg)
 
     ret = read_from_url(pls, seg->init_section, pls->init_sec_buf,
                         pls->init_sec_buf_size, READ_COMPLETE);
+
     ff_format_io_close(pls->parent, &pls->input);
 
     if (ret < 0)
