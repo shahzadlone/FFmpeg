@@ -203,8 +203,11 @@ typedef struct HLSContext {
     int n_renditions;
     struct rendition **renditions;
 
+    enum ManifestType type;
+
     int cur_seq_no;
     int live_start_index;
+    char *selected_variant_id;
     int first_packet;
     int64_t first_timestamp;
     int64_t cur_timestamp;
