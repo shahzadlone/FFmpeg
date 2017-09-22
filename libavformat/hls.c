@@ -1712,6 +1712,7 @@ static int hls_read_header(AVFormatContext *s)
     c->first_packet = 1;
     c->first_timestamp = AV_NOPTS_VALUE;
     c->cur_timestamp = AV_NOPTS_VALUE;
+    c->type = MANIFEST_TYPE_UNSPECIFIED;
 
     if (u) {
         // get the previous user agent & set back to null if string size is zero
