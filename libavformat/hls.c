@@ -444,6 +444,7 @@ static struct segment *new_init_section(struct playlist *pls,
         return NULL;
     }
 
+    // Parsed Segment Size
     if (info->byterange[0]) {
         sec->size = strtoll(info->byterange, NULL, 10);
         ptr = strchr(info->byterange, '@');
