@@ -1308,12 +1308,26 @@ static int64_t default_reload_interval(struct playlist *pls)
                           pls->target_duration;
 }
 
+struct AVIOInternal {
+    URLContext *h;
+};
+
 static int read_data(void *opaque, uint8_t *buf, int buf_size)
 {
     struct playlist *v = opaque;
     HLSContext *c = v->parent->priv_data;
     int ret, i;
     int just_opened = 0;
+    struct AVIOInternal* interal = NULL;
+    URLContext* urlc = NULL;
+
+    // keep reference of mpegts parser callback mechanism
+    if(v->input) {
+        interal = (struct AVIOInternal*)v->input->opaque;
+        urlc = (URLContext*)interal->h;
+        v->mpegts_parser_input_backup = urlc->mpegts_parser_injection;
+        v->mpegts_parser_input_context_backup = urlc->mpegts_parser_injection_context;
+    }
 
 restart:
     if (!v->needed)
