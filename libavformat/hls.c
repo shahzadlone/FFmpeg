@@ -893,6 +893,16 @@ static int parse_playlist(HLSContext *c, const char *url,
                     seg_offset = 0;
                 }
 
+                // Actual Segment Size
+                URLContext* urlCtx;
+                //int ret = ffurl_alloc(&urlCtx, "", 0, 0);
+                if (ffurl_open(&urlCtx, seg->url, 0, 0, NULL) >= 0)
+                    seg->actual_size = ffurl_seek(urlCtx, 0, AVSEEK_SIZE);
+                else
+                    seg->actual_size = -1;
+                ffurl_close(urlCtx);
+                //av_log(NULL, AV_LOG_INFO, "Segment: url: %s,  size = %d / %d\n", seg->url, seg->size, seg->actual_size);
+
                 seg->init_section = cur_init_section;
             }
         }
