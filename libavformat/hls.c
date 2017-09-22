@@ -160,6 +160,10 @@ struct playlist {
      * playlist, if any. */
     int n_init_sections;
     struct segment **init_sections;
+
+    /* Maintain mpegts parser callback mechanism for AVIOContext changes */
+    ffurl_read_callback mpegts_parser_input_backup;
+    void* mpegts_parser_input_context_backup;
 };
 
 /*
