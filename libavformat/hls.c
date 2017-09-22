@@ -67,6 +67,7 @@ enum KeyType {
 struct segment {
     int64_t duration;
     int64_t url_offset;
+    int64_t actual_size;
     int64_t size;
     char *url;
     char *key;
