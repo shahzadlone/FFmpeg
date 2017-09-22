@@ -1607,7 +1607,6 @@ static void add_stream_to_programs(AVFormatContext *s, struct playlist *pls, AVS
         for (j = 0; j < v->n_playlists; j++) {
             if (v->playlists[j] != pls)
                 continue;
-
             av_program_add_stream_index(s, i, stream->index);
 
             if (bandwidth < 0)
