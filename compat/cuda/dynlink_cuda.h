@@ -25,18 +25,18 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if !defined(AV_COMPAT_DYNLINK_CUDA_H) && !defined(CUDA_VERSION)
-#define AV_COMPAT_DYNLINK_CUDA_H
+# if !defined(AV_COMPAT_DYNLINK_CUDA_H) && !defined(CUDA_VERSION)
+# define AV_COMPAT_DYNLINK_CUDA_H
 
-#include <stddef.h>
+# include <stddef.h>
 
-#define CUDA_VERSION 7050
+# define CUDA_VERSION 7050
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-#define CUDAAPI __stdcall
-#else
-#define CUDAAPI
-#endif
+# if defined(_WIN32) || defined(__CYGWIN__)
+# define CUDAAPI __stdcall
+# else
+# define CUDAAPI
+# endif
 
 #define CU_CTX_SCHED_BLOCKING_SYNC 4
 
