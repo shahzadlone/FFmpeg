@@ -89,22 +89,6 @@ static const AVOption acrusher_options[] = {
 
 AVFILTER_DEFINE_CLASS(acrusher);
 
-static double samplereduction(ACrusherContext *s, SRContext *sr, double in)
-{
-    sr->samples++;
-    if (sr->samples >= s->round) {
-        sr->target += s->samples;
-        sr->real += s->round;
-        if (sr->target + s->samples >= sr->real + 1) {
-            sr->last = in;
-            sr->target = 0;
-            sr->real   = 0;
-        }
-        sr->samples = 0;
-    }
-    return sr->last;
-}
-
 static double add_dc(double s, double dc, double idc)
 {
     return s > 0 ? s * dc : s * idc;
